@@ -1,12 +1,20 @@
 # tetris-win-console
 
+=========================
+
 windows console tetris using c++
 my hobby project
 
 
-download whole files
+##1. How to start game
+ ###1.download Release folder
+ ###2. double click tetris.exe
 
 
-make visual studio 2017 project and add those files
+##2. How to start game in visual studio 2017
+ ###1. download tetris folder
+ ###2. open .sln visual studio solution file
+ ###3. build and run
 
-build and run
+##3. Class Diagram
+![Alt](https://github.com/rkdtlsdnr102/tetris-win-console/edit/master/class_diagram.jpg)
