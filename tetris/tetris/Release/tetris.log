@@ -1,0 +1,11 @@
+﻿  clMap.cpp
+c:\users\kim\source\repos\tetris\tetris\clmap.cpp(13): warning C4244: '=': 'double'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+  clTetris.cpp
+  clTetromino.cpp
+  main.cpp
+  코드를 생성하고 있습니다.
+  55 of 394 functions (14.0%) were compiled, the rest were copied from previous compilation.
+    0 functions were new in current compilation
+    0 functions had inline decision re-evaluated but remain unchanged
+  코드를 생성했습니다.
+  tetris.vcxproj -> C:\Users\Kim\source\repos\tetris\Release\tetris.exe
