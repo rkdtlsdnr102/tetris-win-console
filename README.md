@@ -5,7 +5,7 @@
 windows console tetris using c++
 my hobby project
 
-demo link: https://www.youtube.com/upload (my demo)
+demo link: https://www.youtube.com/watch?v=FC8EsuvuNEQ&t=18s (my demo)
 
 ## 1. How to start game
  ### 1. download Release folder
