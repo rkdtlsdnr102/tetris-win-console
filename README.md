@@ -17,4 +17,4 @@ my hobby project
  ###3. build and run
 
 ##3. Class Diagram
-![Alt](https://github.com/rkdtlsdnr102/tetris-win-console/edit/master/class_diagram.jpg)
+![tetris](https://github.com/rkdtlsdnr102/tetris-win-console/blob/master/class%20diagram.jpg)
