@@ -1,56 +1,51 @@
 #include "clTetromino.h"
-#include <ctime>
 #include <iostream>
 
-stTetromino_Shape clTetromino::L_SHAPE= { L_SHAPE_TYPE,FOREGROUND_BLUE | FOREGROUND_INTENSITY,{
+stTetromino_Shape clTetromino::L_SHAPE= { L_SHAPE_TYPE,BLUE,{
 							{{0,0},{0,1},{0,2},{1,2}},
 							{{0,0},{1,0},{2,0},{0,1}},
 							{{0,0},{1,0},{1,1},{1,2}},
 							{{0,1},{1,1},{2,1},{2,0}}
 							} };
 
-stTetromino_Shape clTetromino::T_SHAPE = { T_SHAPE_TYPE,FOREGROUND_RED | FOREGROUND_INTENSITY,{
+stTetromino_Shape clTetromino::T_SHAPE = { T_SHAPE_TYPE,RED,{
 										{{0,0},{1,0},{2,0},{1,1}},
 										{{0,1},{1,0},{1,1},{1,2}},
 										{{1,0},{0,1},{1,1},{2,1}},
 										{{0,0},{0,1},{0,2},{1,1}}
 } };
 
-stTetromino_Shape clTetromino::I_SHAPE = { O_SHAPE_TYPE,FOREGROUND_GREEN | FOREGROUND_INTENSITY,{
+stTetromino_Shape clTetromino::I_SHAPE = { I_SHAPE_TYPE,GREEN,{
 										{{0,0},{0,1},{0,2},{0,3}},
 										{{0,0},{1,0},{2,0},{3,0}}} };
 
-stTetromino_Shape clTetromino::J_SHAPE = { O_SHAPE_TYPE,FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_INTENSITY,{
+stTetromino_Shape clTetromino::J_SHAPE = { J_SHAPE_TYPE,SKY_BLUE,{
 										{{1,0},{1,1},{1,2},{0,2}},
 										{{0,0},{0,1},{1,1},{2,1}},
 										{{0,0},{0,1},{0,2},{1,0}},
 										{{0,0},{1,0},{2,0},{2,1}}
 } };
 
-stTetromino_Shape clTetromino::S_SHAPE = { O_SHAPE_TYPE,FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY,{
+stTetromino_Shape clTetromino::S_SHAPE = { S_SHAPE_TYPE,VIOLET,{
 										{{0,1},{1,1},{1,0},{2,0}},
 										{{0,0},{0,1},{1,1},{1,2}}
 } };
 
-stTetromino_Shape clTetromino::Z_SHAPE = { O_SHAPE_TYPE,FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_INTENSITY,{
+stTetromino_Shape clTetromino::Z_SHAPE = { Z_SHAPE_TYPE,GRAY,{
 										{{0,0},{1,0},{1,1},{2,1}},
 										{{1,0},{1,1},{0,1},{0,2}}
 } };
 
-stTetromino_Shape clTetromino::O_SHAPE = { O_SHAPE_TYPE,FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_INTENSITY,{
+stTetromino_Shape clTetromino::O_SHAPE = { O_SHAPE_TYPE,YELLOW,{
 										{{0,0},{1,0},{0,1},{1,1}},
 } };
 
 std::vector<stTetromino_Shape> clTetromino::SHAPES = { I_SHAPE,J_SHAPE, L_SHAPE,O_SHAPE,S_SHAPE, T_SHAPE,Z_SHAPE };
 clTetromino::clTetromino(int shape_type){
 
-    _shape_type=shape_type ;
     _cur_shape = &SHAPES[shape_type] ;
+	_shape_type = shape_type;
 	_rot_pos = 0;
-	_prev_shape = &(_cur_shape->points_per_rot[_rot_pos]);
-
-
-	srand((unsigned)time(nullptr));
 }
 
 
@@ -94,9 +89,13 @@ int clTetromino::getType() {
 	return _cur_shape->type;
 }
 
+int clTetromino::getColor() {
+
+	return _cur_shape->color;
+}
+
 void clTetromino::rotate90(){
 
-	_prev_shape = &(_cur_shape->points_per_rot[_rot_pos]);
     _rot_pos = (_rot_pos+1)%SHAPES[_shape_type].points_per_rot.size() ;
 }
 
@@ -107,7 +106,7 @@ std::vector<std::pair<int, int>> *clTetromino::getNextShape() {
 	return &SHAPES[_shape_type].points_per_rot[next_rot_pos];
 }
 
-void clTetromino::draw(COORD cursor_pos) {
+void clTetromino::draw(COORD cursor_pos, const char* pattern) {
 
 	HANDLE hdl = GetStdHandle(STD_OUTPUT_HANDLE);
 
@@ -125,7 +124,7 @@ void clTetromino::draw(COORD cursor_pos) {
 
 		SetConsoleCursorPosition(hdl, coord);
 
-		puts(TETROMINO_PATTERN);
+		puts(pattern);
 	}
 
 	SetConsoleTextAttribute(hdl, buf_info.wAttributes);

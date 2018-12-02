@@ -1,5 +1,6 @@
 #include "clMap.h"
 #include <iostream>
+#include <thread>
 #include <Windows.h>
 
 //#define DEBUG
@@ -8,6 +9,8 @@ clMap::clMap(std::pair<int,int> map_size){
 
     _map_size=map_size ;
     _map = new int*[_map_size.second] ;
+
+	_play_field_start_row = _map_size.second*0.1;
 
     for(int i=0;i<_map_size.second;i++)
     {
@@ -28,23 +31,25 @@ void clMap::removeLine(int idx){
         _map[idx][i]=EMPTY_CELL ;
     }
 
-    _reorganizeFrom(idx-1,1) ;
+    _reorganizeFrom(idx-1) ;
 }
 
 void clMap::removeLines(std::vector<int> &idx){
 
-    for(int j=0;j<idx.size();j++){
+    for(int j=idx.size()-1;j>=0;j--){
 
         for(int i=0;i<_map_size.first;i++){
 
-            _map[idx[j]][i]=EMPTY_CELL ;
+			_map[idx[j]][i] = EMPTY_CELL;
+
         }
+
+		_reorganizeFrom(idx[j] - 1);
     }
 
-    _reorganizeFrom(idx.back()-1,idx.size()) ;
 }
 
-void clMap::_reorganizeFrom(int idx, int rm_cnt){
+void clMap::_reorganizeFrom(int idx){
 
 	int from_idx=idx ;
 
@@ -52,7 +57,7 @@ void clMap::_reorganizeFrom(int idx, int rm_cnt){
 
         for(int r=from_idx;r>=0;r--)
         {
-            _map[r+rm_cnt][c]=_map[r][c] ;
+            _map[r+1][c]=_map[r][c] ;
             _map[r][c]=EMPTY_CELL ;
         }
     }
@@ -173,6 +178,14 @@ std::pair<short, short> clMap::getShadowTopLeft() {
 	return tr_coll_tl;
 }
 
+bool clMap::abovePlayfieldStart() {
+
+	if (_cur_tetromino_tl.second < _play_field_start_row)
+		return true;
+
+	return false;
+}
+
 void clMap::rotateTromino90() {
 
 	std::vector<std::pair<int,int>>* next_shape = _cur_tetromino.getNextShape();
@@ -236,6 +249,12 @@ void clMap::draw(COORD cursor_pos) {
 		puts(MAP_FRAME_PATTERN);
 	}
 
+	CONSOLE_SCREEN_BUFFER_INFO org_setting, new_setting;
+
+	GetConsoleScreenBufferInfo(hdl, &org_setting);
+
+	new_setting = org_setting;
+
 	for (int r = 0; r < _map_size.second; r++) {
 
 		for (int c = 0; c < _map_size.first; c++) {
@@ -248,10 +267,91 @@ void clMap::draw(COORD cursor_pos) {
 			SetConsoleCursorPosition(hdl, coord);
 
 			if (_map[r][c] == EMPTY_CELL)
-				puts(MAP_PATTERN);
+			{			
+				if (r != _play_field_start_row)
+					puts(MAP_PATTERN);
+				else
+					puts(PLAY_FIELD_START_PATTERN);
+			}
 			else
+			{
+				new_setting.wAttributes = _map[r][c];
+				SetConsoleTextAttribute(hdl, new_setting.wAttributes);
 				puts(TETROMINO_PATTERN);
+			}
+
+			SetConsoleTextAttribute(hdl, org_setting.wAttributes);
 		}
+	}
+}
+
+void clMap::drawStartLine(COORD cursor_pos)
+{
+	HANDLE hdl = GetStdHandle(STD_OUTPUT_HANDLE);
+
+	CONSOLE_SCREEN_BUFFER_INFO org_setting, new_setting;
+
+	GetConsoleScreenBufferInfo(hdl, &org_setting);
+
+	new_setting = org_setting;
+
+	int tr_bt = _cur_tetromino.getBottom();
+
+	if (_cur_tetromino_tl.second-1 <= _play_field_start_row &&
+		_cur_tetromino_tl.second + tr_bt-1 >= _play_field_start_row)
+	{
+ 		for (int c = 0; c < _map_size.first; c++) {
+
+			COORD coord = cursor_pos;
+
+			coord.X += c * 2;
+			coord.Y += _play_field_start_row;
+
+			SetConsoleCursorPosition(hdl, coord);
+
+			if (_map[_play_field_start_row][c] == EMPTY_CELL)
+				puts(PLAY_FIELD_START_PATTERN);
+			else
+			{
+				new_setting.wAttributes = _map[_play_field_start_row][c];
+				SetConsoleTextAttribute(hdl, new_setting.wAttributes);
+				puts(TETROMINO_PATTERN);
+			}
+
+			SetConsoleTextAttribute(hdl, org_setting.wAttributes);
+		}
+	}
+}
+
+void clMap::drawRemovingRow(std::vector<int> &rm_rows, COORD cursor_pos) {
+
+	HANDLE hdl = GetStdHandle(STD_OUTPUT_HANDLE);
+
+	for (int i = 0; i < 4; i++)
+	{
+		const char * pattern = nullptr;
+
+		if (i % 2 == 0)
+			pattern = REMOVING_CELL_PATTERN;
+		else
+			pattern = MAP_PATTERN;
+
+		for (int r : rm_rows)
+		{
+			for (int c = 0; c < _map_size.first; c++)
+			{
+				COORD coord = cursor_pos;
+
+				coord.X += c * 2;
+				coord.Y += r;
+
+				SetConsoleCursorPosition(hdl, coord);
+
+				puts(pattern);
+			}
+		}
+
+		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	}
 }
 
@@ -268,7 +368,7 @@ void clMap::projectTetromino()
 
 	for (auto pt : *shape)
 	{
-		_map[pt.second + _cur_tetromino_tl.second][pt.first + _cur_tetromino_tl.first] = _cur_tetromino.getType();
+		_map[pt.second + _cur_tetromino_tl.second][pt.first + _cur_tetromino_tl.first] = _cur_tetromino.getColor();
 	}
 }
 

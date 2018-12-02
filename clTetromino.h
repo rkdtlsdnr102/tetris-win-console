@@ -6,16 +6,38 @@
 #include <vector>
 #include <Windows.h>
 
-#define EMPTY_CELL 0
+#define EMPTY_CELL -1
 #define TETROMINO_PATTERN "бс"
+#define SHADOW_TETROMINO_PATTERN "бр"
 
-#define L_SHAPE_TYPE 1
-#define T_SHAPE_TYPE 2
-#define I_SHAPE_TYPE 3
-#define J_SHAPE_TYPE 4
-#define S_SHAPE_TYPE 5
-#define Z_SHAPE_TYPE 6
-#define O_SHAPE_TYPE 7
+
+#define I_SHAPE_TYPE 10
+#define J_SHAPE_TYPE 20
+#define L_SHAPE_TYPE 30
+#define O_SHAPE_TYPE 40
+#define S_SHAPE_TYPE 50
+#define T_SHAPE_TYPE 60
+#define Z_SHAPE_TYPE 70
+
+
+enum CONSOLE_TEXT_COLOR : int{
+	BLACK,      /*  0 : BLACK */
+	DARK_BLUE,    /*  1 : DARK_BLUE */
+	DARK_GREEN,    /*  2 : DARK_GREEN */
+	DARK_SKY_BLUE,  /*  3 : DARK_SKY_BLUE */
+	DARK_RED,    /*  4 : DARK_RED */
+	DARK_VOILET,  /*  5 : DARK_VOILET */
+	DARK_YELLOW,  /*  6 : DARK_YELLOW */
+	GRAY,      /*  7 : GRAY */
+	DARK_GRAY,    /*  8 : DARK_GRAY */
+	BLUE,      /*  9 : BLUE */
+	GREEN,      /* 10 : GREEN */
+	SKY_BLUE,    /* 11 : SKY_BLUE */
+	RED,      /* 12 : RED */
+	VIOLET,      /* 13 : VIOLET */
+	YELLOW,      /* 14 : YELLOW */
+	WHITE,      /* 15 : WHITE */
+};
 
 struct stTetromino_Shape {
 
@@ -40,8 +62,7 @@ private:
 
 private:
     stTetromino_Shape* _cur_shape ;
-	std::vector<std::pair<int, int>> *_prev_shape;
-    int _shape_type ;
+	int _shape_type;
 	int _rot_pos;
 
 public:
@@ -52,7 +73,8 @@ public:
 	int getRight();
 	int getBottom();
 	int getType();
-	void draw(COORD cursor_pos);
+	int getColor();
+	void draw(COORD cursor_pos, const char* pattern=TETROMINO_PATTERN);
 	void erase(COORD cursor_pos, const char* pattern);
 	static clTetromino createRandomTetromino();
 
