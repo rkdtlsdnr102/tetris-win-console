@@ -1,5 +1,6 @@
 
 #define TETRIS_TEST
+
 #ifdef TETROMINO_TEST
 
 #include <iostream>
@@ -7,7 +8,7 @@
 
 int main(){
 
-	clTetromino &&tr = clTetromino::createRandomTetromino();
+	clTetromino &&tr = clTetromino::getRandomTetrominoFormat({0,0},{1,10});
 
 	auto cur_shape = tr.getCurrentShape();
 
@@ -17,7 +18,7 @@ int main(){
 	for (int i = 0; i < cur_shape->size(); i++)
 	{
 		
-		map[3+(*cur_shape)[i].second][5+(*cur_shape)[i].first] = tr.getVal();
+		map[1+(*cur_shape)[i].second][1+(*cur_shape)[i].first] = tr.getType();
 		
 	}
 
@@ -41,7 +42,7 @@ int main(){
 
 int main() {
 
-	clMap map({ 10,15 });
+	clMap map({ 10,15 }, { 2,1 });
 
 	//map.moveTetrominoHor(1);
 	//map.draw();
@@ -52,47 +53,36 @@ int main() {
 
 	//map.replaceTetromino(tr);
 	map.rotateTromino90();
-	map.rotateTromino90();
-	map.rotateTromino90();
+	map.getTetromino().draw();
 
 	map.moveTetrominoHor(1);
-	map.moveTetrominoHor(1);
-	map.moveTetrominoHor(1);
-	map.moveTetrominoHor(1);
-	map.moveTetrominoHor(1);
-	map.moveTetrominoHor(1);
-	map.rotateTromino90();
-	map.rotateTromino90();
-	map.rotateTromino90();
-	map.moveTetrominoHor(1);
-	map.moveTetrominoHor(1);
+	map.getTetromino().draw();
 	
-	map.draw({1,1});
-	map.getTetromino().draw({ 1,1 });
+	map.getTetromino().draw();
 
 	map.moveTetrominoDown();
 
-	map.draw({ 1,1 });
-	map.getTetromino().draw({ 1,1 });
+	map.draw();
+	map.getTetromino().draw();
 
 	map.moveTetrominoDown();
 	
-	map.draw({ 1,1 });
-	map.getTetromino().draw({ 1,1 });
+	map.draw();
+	map.getTetromino().draw();
 	
 	map.moveTetrominoDown();
 	
-	map.draw({ 1,1 });
-	map.getTetromino().draw({ 1,1 });
+	map.draw();
+	map.getTetromino().draw();
 	
 	map.moveTetrominoDown();
 	
-	map.draw({ 1,1 });
-	map.getTetromino().draw({ 1,1 });
+	map.draw();
+	map.getTetromino().draw();
 	
 	map.moveTetrominoDown();
-	map.draw({ 1,1 });
-	map.getTetromino().draw({ 1,1 });
+	map.draw();
+	map.getTetromino().draw();
 	//map.moveTetromino(0, 1);
 	//map.moveTetromino(0, 0);
 	//map.moveTetromino(0, 0);
@@ -123,22 +113,69 @@ int main() {
 	//map.draw();
 }
 
-#elif defined TETRIS_TEST
+#elif defined STAGE_TEST
 
 #include <iostream>
-#include "clTetris.h"
+#include "clStage.h"
 #include <ctime>
 
 int main() {
 
 	srand((unsigned)time(nullptr));//for random tetris generator
 
-	clTetris tetris(10);
+	clStage* stage1 = new clStage(80000,5, 500000, 1, "C:\\Users\\USER\\Desktop\\tetris\\tetris-win-console\\tetris\\Debug\\BGM_Tetris_Bradinsky.wav");
 
-	tetris.run();
+	
+	clStage* stage2 = new clStage(70000, 10, 400000, 2, "C:\\Users\\USER\\Desktop\\tetris\\tetris-win-console\\tetris\\Debug\\BGM+Tetris+Kalinka.wav");
+
+	
+	clStage* stage3 = new clStage(60000, 15, 300000, 3, "C:\\Users\\USER\\Desktop\\tetris\\tetris-win-console\\tetris\\Debug\\BGM_Tetris_Bradinsky.wav");
+
+	stage1->run();
+	delete stage1 ;
+	system("cls");
+
+	stage2->run();
+	delete stage2 ;
+	system("cls");
+
+	stage3->run();
+	delete stage3 ;
 	
 }
 
+#elif defined(TIMER_TEST)
+
+#include "clTimer.h"
+#include "tetrisUtility.h"
+
+int main() {
+
+	hideCursor();
+	clTimer *t = clTimer::getInstance();
+
+	t->setDpTopLeft({ 20,20 });
+
+	t->start();
+
+	while (1);
+
+
+}
+
+
+#elif defined(TETRIS_TEST)
+
+#include "clTetris.h"
+#include <string>
+
+int main(){
+
+	std::string str("BGM_Tetris_Bradinsky.wav");
+	clTetris tetris(str) ;
+
+	tetris.run() ;
+}
 
 #endif 
 

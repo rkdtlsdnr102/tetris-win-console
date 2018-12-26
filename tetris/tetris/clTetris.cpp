@@ -1,298 +1,270 @@
-#include "clTetris.h"
+﻿#include "clTetris.h"
+#include "tetrisUtility.h"
 #include <iostream>
 #include <iomanip>
 #include <Windows.h>
 #include <mmsystem.h>
 
-#define ROTATE_KEY 0x52
-#define HARD_DROP_KEY 0x20
-#define KEY_PRESSED 0x0001
 #define EMPTY_PATTERN  " "
-#define SCREEN_FRAME_PATTERN "��"
+#define EMPTY_PATTERN_DOUBLE "  "
+#define SCREEN_FRAME_PATTERN "■"
 
 
-
-clTetris::clTetris(int fps)
+clTetris::clTetris(std::string bgm_file_path)
 {
-	_map = new clMap({10,20});
-	_map_dp_tl = { 2,1 };
 
-	_explain_frame_dp_tl = { 42,1 };
+	_bgm_file_path=bgm_file_path ;
 
-	_next_tetromino = clTetromino::createRandomTetromino();
-	_next_tetromino_dp_tl = { 30,7 };
+	_cur_stage_idx=0 ;
 
-	auto tr_tl = _map->getTetrominoTopLeft();
-
-	HWND console_hwnd = GetConsoleWindow();
-
-	MoveWindow(console_hwnd, 100, 100, 1000, 600, TRUE);
-
-    _rm_lines_cnt = 20;
-	_rm_lines_dp_tl = { 28,19 };
-	_fps = fps;
-
-	_g_state = GAME_RUNNING;
-	_last_result = PLAYER_WIN;
-
-	PlaySound(TEXT("BGM+Tetris+Kalinka.wav"), NULL,
-					SND_FILENAME | SND_ASYNC | SND_LOOP);
 }
 
 void clTetris::run()
 {
-	int clk=0,period = 1000000 / _fps;
-
-	_map->draw(_map_dp_tl);
-	_map->drawStartLine(_map_dp_tl);
-	auto tr_tl = _map->getTetrominoTopLeft();
-	_map->getTetromino().draw({ _map_dp_tl.X + tr_tl.first*2,_map_dp_tl.Y + tr_tl.second });
-	_drawNextTetromino(_next_tetromino_dp_tl);
-	_drawRemainingCount(_rm_lines_dp_tl);
-	_drawExplain(_explain_frame_dp_tl);
-
-	while (1)
+	while(1)
 	{
-		clk++;
+		GAME_READY_SCREEN_CHOICE chosen_menu = _gameReadyScreen();
 
-		userInput();
-
-		if (_g_state == GAME_OVER)
-			break;
-
-		if (clk == period)
+		if (chosen_menu == GAME_READY_SCREEN_CHOICE::GAME_PLAY)
 		{
-			auto tr_tl = _map->getTetrominoTopLeft();
-			auto shadow_tl = _map->getShadowTopLeft();
+			_stages = new clStage[3];
 
-			_map->getTetromino().erase({ _map_dp_tl.X + tr_tl.first*2,_map_dp_tl.Y + tr_tl.second },MAP_PATTERN);
-			_map->getTetromino().erase({ _map_dp_tl.X + shadow_tl.first * 2, _map_dp_tl.Y + shadow_tl.second }, MAP_PATTERN);
-			
-			if (_map->moveTetrominoDown())
-			{					
-				_handleCollision();
+			stGameRecord player_record = { "",0,0,0 };
 
-				_map->draw(_map_dp_tl);			
-				_drawRemainingCount(_rm_lines_dp_tl);
+			_stages[0].initialize(100000, 5, 500000, 1,
+				"C:\\Users\\USER\\Desktop\\tetris\\tetris-win-console\\tetris\\Debug\\BGM_Tetris_Bradinsky.wav");
+			_stages[1].initialize(90000, 10, 400000, 2,
+				"C:\\Users\\USER\\Desktop\\tetris\\tetris-win-console\\tetris\\Debug\\BGM+Tetris+Kalinka.wav");
+			_stages[2].initialize(80000, 15, 300000, 3,
+				"C:\\Users\\USER\\Desktop\\tetris\\tetris-win-console\\tetris\\Debug\\BGM_Tetris_Bradinsky.wav");
+
+			clStage::GAME_RESULT res = clStage::GAME_RESULT::PLAYER_WIN;
+
+			system("cls");
+
+			while (_cur_stage_idx <= 2 && res == clStage::GAME_RESULT::PLAYER_WIN)
+			{
+				_stages[_cur_stage_idx].setPlayerRecord(&player_record);
+				res=_stages[_cur_stage_idx].run();
+				_cur_stage_idx++;
 			}
-			
-			_map->drawStartLine(_map_dp_tl);
 
-			tr_tl = _map->getTetrominoTopLeft();
-			shadow_tl = _map->getShadowTopLeft();
-			_map->getTetromino().draw({ _map_dp_tl.X + shadow_tl.first * 2,_map_dp_tl.Y + shadow_tl.second }, SHADOW_TETROMINO_PATTERN);
-			_map->getTetromino().draw({ _map_dp_tl.X + tr_tl.first*2,_map_dp_tl.Y + tr_tl.second });		
+			if (_cur_stage_idx > 2 && res == clStage::GAME_RESULT::PLAYER_WIN)
+			{
+				drawXY(25, 25, "PLAYER WIN!!!");			
+			}
+			else
+			{
+				drawXY(25, 25, "PLAYER LOSE~~~");
+			}
 
-			clk = 0;
+			while (1)
+			{
+				if ((GetAsyncKeyState(VK_RETURN) & 0x0001))
+					break;
+			}
+
+			//clear stages
+			delete[] _stages;//retrieve memory
+
+			_cur_stage_idx = 0;
+			clTimer::getInstance()->reset();
 		}
-
-		if (_g_state == GAME_OVER)
-			break;
-	}
-
-	if (_last_result == PLAYER_WIN)
-	{
-		std::cout << "PLAYER WIN";
-	}
-	else
-		std::cout << "PLAYER_LOSE";
- 
-}
-
-void clTetris::userInput()
-{
-
-    short left = GetAsyncKeyState(VK_LEFT);
-    short right = GetAsyncKeyState(VK_RIGHT);
-    short down = GetAsyncKeyState(VK_DOWN);
-    short rotate = GetAsyncKeyState(ROTATE_KEY);
-	short hard_drop = GetAsyncKeyState(HARD_DROP_KEY);
-
-	short res;
-	if (res=((left & KEY_PRESSED) | (right & KEY_PRESSED) | (down & KEY_PRESSED) | (rotate & KEY_PRESSED) | (hard_drop & KEY_PRESSED)))
-	{
-		auto tr_tl = _map->getTetrominoTopLeft();
-		auto shadow_tl = _map->getShadowTopLeft();		
-
-		_map->getTetromino().erase({ _map_dp_tl.X + shadow_tl.first*2, _map_dp_tl.Y + shadow_tl.second }, MAP_PATTERN);
-		_map->getTetromino().erase({ _map_dp_tl.X + tr_tl.first * 2,_map_dp_tl.Y + tr_tl.second }, MAP_PATTERN);
-
-		if ((left & KEY_PRESSED) == KEY_PRESSED)
-		{			
-			_map->moveTetrominoHor(-1);		
-		}
-		else if ((right & KEY_PRESSED) == KEY_PRESSED)
-		{			
-			_map->moveTetrominoHor(1);			
-		}
-		else if ((down & KEY_PRESSED) == KEY_PRESSED)
+		else if (chosen_menu == GAME_READY_SCREEN_CHOICE::VIEW_RECORD)
 		{
-			if (_map->moveTetrominoDown())
-			{	
-				_handleCollision();
-
-				_map->draw(_map_dp_tl);
-				_drawRemainingCount(_rm_lines_dp_tl);
-			}
-		}
-		else if ((hard_drop & KEY_PRESSED) == KEY_PRESSED)
-		{			
-
-			_map->hardDrop();
-
-			_handleCollision();
-
-			_map->draw(_map_dp_tl);
-			_drawRemainingCount(_rm_lines_dp_tl);
 			
 		}
-
-		if ((rotate & KEY_PRESSED) == KEY_PRESSED)
-		{			
-			_map->rotateTromino90();			
+		else if (chosen_menu==GAME_READY_SCREEN_CHOICE::EXIT)
+		{
+			break;
 		}
-
-		_map->drawStartLine(_map_dp_tl);
-
-		tr_tl = _map->getTetrominoTopLeft();
-		shadow_tl = _map->getShadowTopLeft();
-		_map->getTetromino().draw({ _map_dp_tl.X + shadow_tl.first * 2,_map_dp_tl.Y + shadow_tl.second }, SHADOW_TETROMINO_PATTERN);
-		_map->getTetromino().draw({ _map_dp_tl.X + tr_tl.first * 2,_map_dp_tl.Y + tr_tl.second });
 	}
 }
 
-void drawFrame(COORD cursor_pos, int w, int h)
-{
-	HANDLE hdl = GetStdHandle(STD_OUTPUT_HANDLE);
+clTetris::GAME_READY_SCREEN_CHOICE clTetris::_gameReadyScreen(){
 
-	for (int c = 0; c < w; c++)
-	{
+	int i,j;
 
-		COORD frame_cursor_pos = cursor_pos;
-		frame_cursor_pos.X += 2*c;
+	HWND console_hwnd = GetConsoleWindow();
 
-		SetConsoleCursorPosition(hdl, frame_cursor_pos);
+	MoveWindow(console_hwnd, 100, 100, 800, 500, TRUE);
 
-		std::cout << SCREEN_FRAME_PATTERN;
-		
-		frame_cursor_pos.Y += (h-1);
+	system("cls");
 
-		SetConsoleCursorPosition(hdl, frame_cursor_pos);
-
-		std::cout << SCREEN_FRAME_PATTERN;
-	}
-
-	for (int r = 0; r < h; r++)
-	{
-
-		COORD frame_cursor_pos = cursor_pos;		
-		frame_cursor_pos.Y += r;
-
-		SetConsoleCursorPosition(hdl, frame_cursor_pos);
-
-		std::cout << SCREEN_FRAME_PATTERN;
-
-		frame_cursor_pos.X += (2 * w-2);
-
-		SetConsoleCursorPosition(hdl, frame_cursor_pos);
-
-		std::cout << SCREEN_FRAME_PATTERN;
-	}
-}
-
-void clTetris::_drawRemainingCount(COORD cursor_pos) {
-
-	HANDLE hdl = GetStdHandle(STD_OUTPUT_HANDLE);
-
-	drawFrame({ cursor_pos.X - 3,cursor_pos.Y - 2 }, 13, 5);
-
-	SetConsoleCursorPosition(hdl, cursor_pos);
+	int text_battle_x=3;
+	int text_battle_y=2;
 	
-	std::cout << std::setw(20) << std::cout.fill(' ');
-	SetConsoleCursorPosition(hdl, cursor_pos);
-	std::cout << "Remaining lines: " << _rm_lines_cnt;
-}
+	int text_tetris_x=16;
+	int text_tetris_y=9;
+	
+	int text_pressKey_x=20;
+	int text_pressKey_y=15;
 
-void clTetris::_drawNextTetromino(COORD cursor_pos)
-{
-	int tr_bt = _next_tetromino.getBottom(), tr_r = _next_tetromino.getRight();
+	PlaySoundA(_bgm_file_path.c_str(), NULL,
+		SND_FILENAME | SND_ASYNC | SND_LOOP);
 
-	drawFrame({ cursor_pos.X - 4,cursor_pos.Y-2 }, 7, 8);
+	int text_battle_order[9]={0,1,2,3,4,2,1,4,2};
+	int text_battle [5][6][25]={
+		9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,
+		9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,
+		9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,
+		9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,
+		9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,
+		9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,
 
-	_next_tetromino.draw(cursor_pos);
-}
+		1,1,0,0,0,1,0,0,1,1,1,0,1,1,1,0,1,0,0,0,1,1,1,0,0,
+		1,0,1,0,1,0,1,0,0,1,0,0,0,1,0,0,1,0,0,0,1,0,0,0,0,
+		1,1,0,0,1,1,1,0,0,1,0,0,0,1,0,0,1,0,0,0,1,1,1,0,0,
+		1,0,1,0,1,0,1,0,0,1,0,0,0,1,0,0,1,0,0,0,1,0,0,0,0,
+		1,1,0,0,1,0,1,0,0,1,0,0,0,1,0,0,1,1,1,0,1,1,1,0,0,
+		0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 
-void clTetris::_drawExplain(COORD cursor_pos)
-{
+		0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+		0,1,1,0,0,0,1,0,0,1,1,1,0,1,1,1,0,1,0,0,0,1,1,1,0,
+		0,1,0,1,0,1,0,1,0,0,1,0,0,0,1,0,0,1,0,0,0,1,0,0,0,
+		0,1,1,0,0,1,1,1,0,0,1,0,0,0,1,0,0,1,0,0,0,1,1,1,0,
+		0,1,0,1,0,1,0,1,0,0,1,0,0,0,1,0,0,1,0,0,0,1,0,0,0,
+		0,1,1,0,0,1,0,1,0,0,1,0,0,0,1,0,0,1,1,1,0,1,1,1,0,
 
-	HANDLE hdl = GetStdHandle(STD_OUTPUT_HANDLE);
+		0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+		1,1,0,0,0,1,0,0,1,1,1,0,1,1,1,0,1,0,0,0,1,1,1,0,0,
+		1,0,1,0,1,0,1,0,0,1,0,0,0,1,0,0,1,0,0,0,1,0,0,0,0,
+		1,1,0,0,1,1,1,0,0,1,0,0,0,1,0,0,1,0,0,0,1,1,1,0,0,
+		1,0,1,0,1,0,1,0,0,1,0,0,0,1,0,0,1,0,0,0,1,0,0,0,0,
+		1,1,0,0,1,0,1,0,0,1,0,0,0,1,0,0,1,1,1,0,1,1,1,0,0,
 
-	drawFrame(cursor_pos, 15, 12);
+		0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+		0,0,1,1,0,0,0,1,0,0,1,1,1,0,1,1,1,0,1,0,0,0,1,1,1,
+		0,0,1,0,1,0,1,0,1,0,0,1,0,0,0,1,0,0,1,0,0,0,1,0,0,
+		0,0,1,1,0,0,1,1,1,0,0,1,0,0,0,1,0,0,1,0,0,0,1,1,1,
+		0,0,1,0,1,0,1,0,1,0,0,1,0,0,0,1,0,0,1,0,0,0,1,0,0,
+		0,0,1,1,0,0,1,0,1,0,0,1,0,0,0,1,0,0,1,1,1,0,1,1,1
+	};
 
-	SetConsoleCursorPosition(hdl, { cursor_pos.X + 4,cursor_pos.Y + 2 });
-	puts("LEFT RIGHT MOVE: ��,��");
-	SetConsoleCursorPosition(hdl, { cursor_pos.X + 4,cursor_pos.Y + 4 });
-	puts("MOVE 1 DOWN: ��");
-	SetConsoleCursorPosition(hdl, { cursor_pos.X + 4,cursor_pos.Y + 6 });
-	puts("HARD DROP: SPACE");
-	SetConsoleCursorPosition(hdl, { cursor_pos.X + 4,cursor_pos.Y + 8 });
-	puts("ROTATION(clockwise): R");
-}
+	int text_tetris [5][21]={
+		1,1,1,0,1,1,1,0,1,1,1,0,1,1,0,0,1,0,1,1,1,
+		0,1,0,0,1,0,0,0,0,1,0,0,1,0,1,0,1,0,1,0,0,
+		0,1,0,0,1,1,1,0,0,1,0,0,1,1,0,0,1,0,1,1,1,
+		0,1,0,0,1,0,0,0,0,1,0,0,1,0,1,0,1,0,0,0,1,
+		0,1,0,0,1,1,1,0,0,1,0,0,1,0,1,0,1,0,1,1,1
+	};
 
-void clTetris::_handleCollision(){
-
-	if (_map->abovePlayfieldStart())
-	{
-		_g_state = GAME_OVER;
-		_last_result = PLAYER_LOSE;
+	HANDLE hdl = GetStdHandle(STD_OUTPUT_HANDLE) ;
+	
+	SetConsoleTextAttribute( GetStdHandle( STD_OUTPUT_HANDLE ), 0x0003);
+	for(int k=1;k<9;k++){
+		for(i=0;i<6;i++){
+			for(j=0;j<25;j++){
+				if(text_battle[text_battle_order[k]][i][j]!=text_battle[text_battle_order[k-1]][i][j]){				
+					if(text_battle[text_battle_order[k]][i][j]==1) drawXY((2 * (text_battle_x + j)), (SHORT)(text_battle_y + i), "■");
+					else if(text_battle[text_battle_order[k]][i][j]==0) drawXY((2 * (text_battle_x + j)), (SHORT)(text_battle_y + i), " ");
+				}
+			}
+		}
+		Sleep(100);
 	}
-	else
-	{
+	SetConsoleTextAttribute( GetStdHandle( STD_OUTPUT_HANDLE ), 0x0007);
+	Sleep(200);
 
-		clTetromino cur_tr = _map->getTetromino();
 
-		std::pair<int, int> tl_tr = _map->getTetrominoTopLeft();
+	COORD explain_frame_dp_tl = { 8,15 };
+	//draw explain
+	drawFrameUtil(explain_frame_dp_tl, 15, 11,
+		"─", "│", "┌", "┐", "└", "┘");
 
-		_map->projectTetromino();
+	drawXY(explain_frame_dp_tl.X + 4,explain_frame_dp_tl.Y + 2,
+		"LEFT RIGHT MOVE: ←,→");
 
-		std::vector<int> remove_rows;
+	drawXY( explain_frame_dp_tl.X + 4,explain_frame_dp_tl.Y + 4,
+		"MOVE 1 DOWN: ↓");
+	drawXY(explain_frame_dp_tl.X + 4,explain_frame_dp_tl.Y + 6 ,
+		"HARD DROP: SPACE");
+	drawXY(explain_frame_dp_tl.X + 4,explain_frame_dp_tl.Y + 8 ,
+		"ROTATION(clockwise): R");
 
-		for (int r = tl_tr.second + cur_tr.getBottom(); r >= tl_tr.second; r--)
-		{
-			if (_map->isLineConnected(r))
-				remove_rows.push_back(r);
+	drawXY(50,18, "START");
+	drawXY(50,21, "RECORD");
+	drawXY(50,24, "EXIT");
+
+	int arrow_idx=0;
+	COORD arrow_pos = { 47,18 };//pointing START menu
+
+	drawXY(arrow_pos.X, arrow_pos.Y, "▶");
+
+	CONSOLE_SCREEN_BUFFER_INFO org_binfo;
+	GetConsoleScreenBufferInfo(hdl, &org_binfo);
+
+	SHORT key = 0;
+
+	for (int cnt = 0;; cnt++) {
+		Sleep(10);
+
+		if (cnt % 75 == 0) {
+			SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), cnt % 7 + 2);
+			for (i = 0; i < 5; i++) {
+				for (j = 0; j < 21; j++) {					
+					if (text_tetris[i][j] == 1) drawXY(2 * (text_tetris_x + j), text_tetris_y + i,"▣");
+				}
+			}
 		}
 
-		if (remove_rows.size() > 0)
+		SetConsoleTextAttribute(hdl, org_binfo.wAttributes);
+
+		
+		
+		if (GetAsyncKeyState(VK_DOWN) & 0x0001)
 		{
-			_map->draw(_map_dp_tl);
-			_map->drawRemovingRow(remove_rows, _map_dp_tl);
+			if (arrow_idx < 2)
+			{
+				drawXY(arrow_pos.X, arrow_pos.Y, " ");
 
-			_map->removeLines(remove_rows);
+				arrow_pos.Y+=3;
 
-			_rm_lines_cnt -= remove_rows.size();
+				drawXY(arrow_pos.X, arrow_pos.Y, "▶");
+
+				arrow_idx++;
+			}
 		}
-
-		_map->setTetromino(_next_tetromino);
-
-		_next_tetromino.erase(_next_tetromino_dp_tl, EMPTY_PATTERN);
-
-		_next_tetromino = clTetromino::createRandomTetromino();
-
-		_drawNextTetromino(_next_tetromino_dp_tl);
-
-		if (_rm_lines_cnt <= 0)
+		else if(GetAsyncKeyState(VK_UP) & 0x0001)
 		{
-			_g_state = GAME_OVER;
-			_last_result = PLAYER_WIN;
-		}
+			if (arrow_idx > 0)
+			{
+				drawXY(arrow_pos.X, arrow_pos.Y, " ");
 
+				arrow_pos.Y-=3;
+
+				drawXY(arrow_pos.X, arrow_pos.Y, "▶");
+
+				arrow_idx--;
+			}
+		}
+		
+		//엔터키
+		if ((GetAsyncKeyState(VK_RETURN) & 0x8001)==0x8000) break;
 	}
+
+	GAME_READY_SCREEN_CHOICE choice;
+
+	switch (arrow_idx)
+	{
+	case 0:
+		choice = GAME_PLAY;
+		break;
+
+	case 1:
+		choice = VIEW_RECORD;
+		break;
+
+	case 2:
+		choice = EXIT;
+		break;
+	}
+
+	return	choice;
 }
+
 
 clTetris::~clTetris() {
 
-	delete _map;
-
-	PlaySound(NULL, 0,0);
+	
 }

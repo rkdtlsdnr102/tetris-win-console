@@ -1,4 +1,4 @@
-#include "clTetromino.h"
+﻿#include "clTetromino.h"
 #include <iostream>
 
 stTetromino_Shape clTetromino::L_SHAPE= { L_SHAPE_TYPE,BLUE,{
@@ -41,11 +41,15 @@ stTetromino_Shape clTetromino::O_SHAPE = { O_SHAPE_TYPE,YELLOW,{
 } };
 
 std::vector<stTetromino_Shape> clTetromino::SHAPES = { I_SHAPE,J_SHAPE, L_SHAPE,O_SHAPE,S_SHAPE, T_SHAPE,Z_SHAPE };
-clTetromino::clTetromino(int shape_type){
+
+clTetromino::clTetromino(std::pair<int,int> init_tl, COORD cur_dp_abs_tl,int shape_type){
 
     _cur_shape = &SHAPES[shape_type] ;
 	_shape_type = shape_type;
 	_rot_pos = 0;
+
+	_cur_tl = init_tl ;
+	_cur_dp_abs_tl=cur_dp_abs_tl ;
 }
 
 
@@ -61,7 +65,7 @@ int clTetromino::getRight() {
 		}
 	}
 
-	return max;
+	return _cur_tl.first+max;
 }
 
 int clTetromino::getBottom() {
@@ -76,7 +80,12 @@ int clTetromino::getBottom() {
 		}
 	}
 
-	return max ;
+	return _cur_tl.second+max ;
+}
+
+std::pair<int,int> clTetromino::getTetrominoTopLeft(){
+
+	return _cur_tl ;
 }
 
 std::vector<std::pair<int,int>>* clTetromino::getCurrentShape(){
@@ -99,6 +108,12 @@ void clTetromino::rotate90(){
     _rot_pos = (_rot_pos+1)%SHAPES[_shape_type].points_per_rot.size() ;
 }
 
+void clTetromino::move(std::pair<int,int> offset)
+{
+	_cur_tl.first+=offset.first ;
+	_cur_tl.second+=offset.second ;
+}
+
 std::vector<std::pair<int, int>> *clTetromino::getNextShape() {
 
 	int next_rot_pos = (_rot_pos + 1) % SHAPES[_shape_type].points_per_rot.size();
@@ -106,7 +121,7 @@ std::vector<std::pair<int, int>> *clTetromino::getNextShape() {
 	return &SHAPES[_shape_type].points_per_rot[next_rot_pos];
 }
 
-void clTetromino::draw(COORD cursor_pos, const char* pattern) {
+void clTetromino::draw(const char* pattern) {
 
 	HANDLE hdl = GetStdHandle(STD_OUTPUT_HANDLE);
 
@@ -117,43 +132,73 @@ void clTetromino::draw(COORD cursor_pos, const char* pattern) {
 
 	for (auto pt : _cur_shape->points_per_rot[_rot_pos])
 	{
-		COORD coord = cursor_pos;
+		COORD coord = { _cur_dp_abs_tl.X+_cur_tl.first*2, _cur_dp_abs_tl.Y+_cur_tl.second };
 
 		coord.X += pt.first*2;
 		coord.Y += pt.second;
 
-		SetConsoleCursorPosition(hdl, coord);
-
-		puts(pattern);
+		drawXY(coord.X, coord.Y,pattern);
 	}
 
 	SetConsoleTextAttribute(hdl, buf_info.wAttributes);
 }
 
-void clTetromino::erase(COORD cursor_pos, const char* pattern) {
+void clTetromino::drawFrame(const char *pattern) {
+
+	drawFrameUtil({_cur_dp_abs_tl.X-4, _cur_dp_abs_tl.Y - 2 },
+		getRight() - _cur_tl.first+5,
+		getBottom() - _cur_tl.second+5,
+		pattern, pattern,
+		pattern, pattern, pattern, pattern);
+}
+
+void clTetromino::eraseFrame(const char *pattern)
+{
+	drawFrameUtil({ _cur_dp_abs_tl.X - 4, _cur_dp_abs_tl.Y - 2 },
+		getRight() - _cur_tl.first+5,
+		getBottom() - _cur_tl.second+5,
+		pattern, pattern,
+		pattern, pattern, pattern, pattern);
+}
+
+void clTetromino::erase(const char* pattern) {
 
 	HANDLE hdl = GetStdHandle(STD_OUTPUT_HANDLE);
 
+	int pattern_len = std::strlen(pattern);
+
 	for (auto pt : _cur_shape->points_per_rot[_rot_pos])
 	{
-		COORD coord = cursor_pos;
+		COORD coord = { _cur_dp_abs_tl.X + _cur_tl.first*2, _cur_dp_abs_tl.Y + _cur_tl.second };
 
 		coord.X += pt.first*2;
 		coord.Y += pt.second;
 
-		SetConsoleCursorPosition(hdl, coord);
-
-		puts(pattern);
+		drawXY(coord.X,coord.Y,pattern);
 	}
 
 }
 
+void clTetromino::setTopLeft(std::pair<int,int> top_left)
+{
+	_cur_tl = top_left ;
+}
+	
+void clTetromino::setDpTopLeft(COORD dp_top_left)
+{
+	_cur_dp_abs_tl = dp_top_left ;
+}
 
 
-clTetromino clTetromino::createRandomTetromino(){
+clTetromino clTetromino::getRandomTetrominoFormat(std::pair<int,int> init_tl, COORD cur_abs_dp_tl){
 
     int type = rand()%SHAPES.size() ;
 
-	return clTetromino(type);
+	return clTetromino(init_tl, cur_abs_dp_tl, type);
+}
+
+COORD clTetromino::getDpTopLeft(){
+
+	return _cur_dp_abs_tl ;
 }
 

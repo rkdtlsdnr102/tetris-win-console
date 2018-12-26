@@ -3,44 +3,42 @@
 #include <utility>
 #include "clMap.h"
 #include "clTetromino.h"
+#include "clStage.h"
 
 class clTetris{
 
-	enum GAME_STATE : int {
-		GAME_RUNNING,
-		GAME_OVER
-	};
+	enum GAME_READY_SCREEN_CHOICE : int{
 
-	enum GAME_RESULT : int {
+		GAME_PLAY,
+		VIEW_RECORD,
+		EXIT
+	} ;
+	struct GameRecord{
 
-		PLAYER_WIN,
-		PLAYER_LOSE
+		std::string name ;
+		int play_time ;
+		int stage ;
+		int score ;
+		static void loadRecord(std::string filepath, GameRecord *playerRecord) ;
+		static void saveRecord(std::string filepath, GameRecord &record) ;
 	};
 
 private:
-    clMap *_map ;
-	COORD _map_dp_tl;
 
-    clTetromino _next_tetromino ;
-	COORD _next_tetromino_dp_tl;
+	int _cur_stage_idx ;
+	GameRecord _playerGameRecord ;
+
+	std::string _bgm_file_path ;
+
+	clStage *_stages;
 	
-    int _rm_lines_cnt ;
-	COORD _rm_lines_dp_tl;
-	int _fps;
+	GAME_READY_SCREEN_CHOICE _gameReadyScreen() ;
+	void _gameRecordScreen() ;
+	void _drawGameResult(COORD cursor_pos, const char* msg) ;
 
-	COORD _explain_frame_dp_tl;
-
-	GAME_STATE _g_state;
-	GAME_RESULT _last_result;
-
-    void userInput() ;
-    void _handleCollision() ;
-	void _drawRemainingCount(COORD cursor_pos);
-	void _drawNextTetromino(COORD cursor_pos);
-	void _drawExplain(COORD cursor_pos);
-
+	
 public:
-    clTetris(int fps=15) ;
+    clTetris(std::string bgm_file_path) ;
     void run() ;
 	~clTetris();
 

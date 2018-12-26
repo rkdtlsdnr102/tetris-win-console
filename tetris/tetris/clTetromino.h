@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 
 #ifndef CL_TETROMINO_H
 #define CL_TETROMINO_H
@@ -6,9 +6,10 @@
 #include <vector>
 #include <Windows.h>
 
+#include "tetrisUtility.h"
+
 #define EMPTY_CELL -1
-#define TETROMINO_PATTERN "¡á"
-#define SHADOW_TETROMINO_PATTERN "¡à"
+#define TETROMINO_PATTERN "â– "
 
 
 #define I_SHAPE_TYPE 10
@@ -64,19 +65,28 @@ private:
     stTetromino_Shape* _cur_shape ;
 	int _shape_type;
 	int _rot_pos;
+	std::pair<int,int> _cur_tl ;
+	COORD _cur_dp_abs_tl ;
 
 public:
-	clTetromino(int shape_type = 0);
+	clTetromino(std::pair<int,int> init_tl, COORD cur_dp_abs_tl, int shape_type = 0);
     void rotate90() ;
+	void move(std::pair<int,int> offset) ;
 	std::vector<std::pair<int, int>>* getCurrentShape() ;
 	std::vector<std::pair<int,int>>* getNextShape() ;
+	std::pair<int,int> getTetrominoTopLeft() ;
 	int getRight();
 	int getBottom();
 	int getType();
 	int getColor();
-	void draw(COORD cursor_pos, const char* pattern=TETROMINO_PATTERN);
-	void erase(COORD cursor_pos, const char* pattern);
-	static clTetromino createRandomTetromino();
+	void setTopLeft(std::pair<int,int> top_left) ;
+	void setDpTopLeft(COORD dp_top_left) ;
+	void draw(const char* pattern=TETROMINO_PATTERN);
+	void erase(const char* pattern);
+	void drawFrame(const char *pattern = FRAME_PATTERN);
+	void eraseFrame(const char *pattern);
+	COORD getDpTopLeft() ;
+	static clTetromino getRandomTetrominoFormat(std::pair<int,int> init_tl, COORD cur_abs_dp_tl);
 
 };
 
