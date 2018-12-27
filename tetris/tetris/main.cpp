@@ -163,6 +163,26 @@ int main() {
 
 }
 
+#elif defined(GAMERECORD_TEST)
+
+#include "stGameRecord.h"
+#include <vector>
+#include <iostream>
+
+int main() {
+
+	std::vector<stGameRecord> records;
+
+	
+	stGameRecord::loadRecord(&records, "C:\\Users\\Kim\\Desktop\\tetris\\tetris-win-console\\tetris\\tetris\\player_records.dat");
+
+	for (auto& rec : records)
+	{
+		std::cout << rec .to_string()<< '\n';
+	}
+	
+	//stGameRecord::saveRecord(rec, "C:\\Users\\Kim\\Desktop\\tetris\\tetris-win-console\\tetris\\tetris\\player_records.dat");
+}
 
 #elif defined(TETRIS_TEST)
 
