@@ -10,7 +10,7 @@
 #define EMPTY_PATTERN_DOUBLE "  "
 #define SCREEN_FRAME_PATTERN "■"
 
-const std::string clTetris::_record_file_path = "C:\\Users\\Kim\\Desktop\\tetris\\tetris-win-console\\tetris\\tetris\\player_records.dat";
+const std::string clTetris::_record_file_path = "../player_records.dat";
 
 
 clTetris::clTetris(std::string bgm_file_path)
@@ -34,11 +34,11 @@ void clTetris::run()
 
 			stGameRecord player_record = { "",0,0,0 };
 
-			_stages[0].initialize(100000, 5, 500000, 1,
+			_stages[0].initialize(100000, 5, 800000, 1,
 				"C:\\Users\\USER\\Desktop\\tetris\\tetris-win-console\\tetris\\Debug\\BGM_Tetris_Bradinsky.wav");
-			_stages[1].initialize(90000, 10, 400000, 2,
+			_stages[1].initialize(90000, 10, 700000, 2,
 				"C:\\Users\\USER\\Desktop\\tetris\\tetris-win-console\\tetris\\Debug\\BGM+Tetris+Kalinka.wav");
-			_stages[2].initialize(80000, 15, 300000, 3,
+			_stages[2].initialize(80000, 15, 600000, 3,
 				"C:\\Users\\USER\\Desktop\\tetris\\tetris-win-console\\tetris\\Debug\\BGM_Tetris_Bradinsky.wav");
 
 			clStage::GAME_RESULT res = clStage::GAME_RESULT::PLAYER_WIN;
@@ -305,7 +305,7 @@ void clTetris::_gameRecordScreen() {
 	drawFrameUtil({ 5,3 }, 52,20,
 		"─", "│", "┌", "┐", "└", "┘");
 
-	std::vector<std::string> name_cols = {"순위","이름","시간","스테이지","점수"};
+	std::vector<std::string> name_cols = {"RANK","NAME","TIME","STAGE","SCORE"};
 
 	std::string name_tuple = make_tuple(name_cols, 20, 3);
 	
