@@ -2,9 +2,7 @@
 #include <cstdio>
 #include "tetrisUtility.h"
 
-#define DEBUG
-
-#ifdef DEBUG
+#ifdef _DEBUG
 #include <iostream>
 #endif 
 
@@ -109,7 +107,7 @@ clTimer::~clTimer() {
 
 	stop();
 
-#ifdef DEBUG
+#ifdef _DEBUG
 	std::cout << "Timer Stopped\n";
 #endif
 	
