@@ -3,8 +3,18 @@
 
 class clTimer{
 
+public:
+	struct stDayTime {
+
+		int cur_hour;
+		int cur_min;
+		int cur_sec;
+		int cur_millisec;
+	};
+
 private:
-    long long _cur_play_time_milli ;
+    //current time in millisecond, shared with tick_event
+	long long _cur_play_time_milli ;
     COORD _cur_play_time_dp_tl ;
 
     std::future<void> tick_event ;
@@ -18,7 +28,7 @@ private:
 	char _time_text[30];
 
 	static clTimer *_inst;
-	static char _time_format[30];
+	static const char *_time_format;
 
 public:
     
@@ -30,7 +40,8 @@ public:
     void setDpTopLeft(COORD dp_top_left) ;
 	~clTimer();
 
-
+	static stDayTime getTime(long long cur_millis);
 	static clTimer *getInstance();
+	
 
 };

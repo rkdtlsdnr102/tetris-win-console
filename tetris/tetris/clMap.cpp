@@ -235,21 +235,39 @@ void clMap::rotateTromino90() {
 
 void clMap::addBottomLine() {
 
-	for (int c = 0; c < _map_size.first; c++)
-	{
-		for (int r = 0; r < _map_size.second - 1; r++)
+	std::pair<int, int> cut_tetr_tl = _cur_tetromino->getTetrominoTopLeft();
+	std::vector<std::pair<int, int>> *shape = _cur_tetromino->getCurrentShape();
+
+	bool collide = false;
+
+	for (auto pt : *shape) {
+
+		if (cut_tetr_tl.second + pt.second + 1 >= _map_size.second ||
+			_map[cut_tetr_tl.second + pt.second + 1][cut_tetr_tl.first + pt.first] != EMPTY_CELL)
 		{
-			_map[r][c] = _map[r + 1][c];
+			collide = true;
+			break;
 		}
 	}
 
-	for(int c = 0; c < _map_size.first; c++)
+	if (!collide)
 	{
-		_map[_map_size.second - 1][c] = ADD_BLOCK;
+		for (int c = 0; c < _map_size.first; c++)
+		{
+			for (int r = 0; r < _map_size.second - 1; r++)
+			{
+				_map[r][c] = _map[r + 1][c];
+			}
+		}
+
+		for (int c = 0; c < _map_size.first; c++)
+		{
+			_map[_map_size.second - 1][c] = ADD_BLOCK;
+		}
+
+		_map[_map_size.second - 1][std::rand() % _map_size.first] = EMPTY_CELL;
+
 	}
-
-	_map[_map_size.second - 1][std::rand() % _map_size.first] = EMPTY_CELL;
-
 }
 
 

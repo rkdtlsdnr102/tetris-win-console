@@ -6,18 +6,22 @@
 #define ROTATE_KEY 0x52
 #define HARD_DROP_KEY 0x20
 
+const char THEMES[3][40] = { "../stage1.wav" ,
+						"../stage2.wav" ,
+						"../stage3.wav" };
+
 clStage::clStage(){
 
 }
 
 clStage::clStage(int down_period_milli, int total_rm_lines_cnt, int add_row_period_milli, 
-	int stage_num, std::string bgm_file_path)
+	int stage_num)
 {
-	initialize(down_period_milli, total_rm_lines_cnt, add_row_period_milli, stage_num, bgm_file_path);
+	initialize(down_period_milli, total_rm_lines_cnt, add_row_period_milli, stage_num);
 }
 
 void clStage::initialize(int down_period_milli, int total_rm_lines_cnt, int add_row_period_milli, 
-	int stage_num, std::string bgm_file_path)
+	int stage_num)
 {
 	_map = new clMap({ 10,20 }, { 3,2 });
 
@@ -34,7 +38,7 @@ void clStage::initialize(int down_period_milli, int total_rm_lines_cnt, int add_
 	_add_row_period_milli = add_row_period_milli;
 	_down_period_milli = down_period_milli;
 
-	_bgm_file_path = bgm_file_path;
+	_bgm_file_path = THEMES[_stage_num-1];
 
 	clTimer::getInstance()->setDpTopLeft({ 29,20 });
 
@@ -80,6 +84,7 @@ clStage::GAME_RESULT clStage::run()
 
 	while (1)
 	{
+
 		down_clk_cnt++;
 		add_row_clk_cnt++;
 
@@ -87,26 +92,6 @@ clStage::GAME_RESULT clStage::run()
 
         if(_g_state==GAME_OVER)
             break ;
-
-		if (down_clk_cnt == _down_period_milli)
-		{
-			_map->eraseShadowTetromino();
-			_map->getTetromino().erase(MAP_PATTERN);
-			
-			if (_map->moveTetrominoDown())
-			{					
-				_handleCollision();
-
-				_map->draw();			
-			}
-			
-			_map->drawStartLine();
-
-			_map->drawShadowTetromino();
-			_map->getTetromino().draw() ;		
-
-			down_clk_cnt = 0;
-		}
 
 		if (add_row_clk_cnt == _add_row_period_milli)
 		{
@@ -127,6 +112,26 @@ clStage::GAME_RESULT clStage::run()
 				_g_state = GAME_OVER;
 				_latest_result = PLAYER_LOSE;
 			}
+		}
+
+		if (down_clk_cnt == _down_period_milli)
+		{
+			_map->eraseShadowTetromino();
+			_map->getTetromino().erase(MAP_PATTERN);
+
+			if (_map->moveTetrominoDown())
+			{
+				_handleCollision();
+
+				_map->draw();
+			}
+
+			_map->drawStartLine();
+
+			_map->drawShadowTetromino();
+			_map->getTetromino().draw();
+
+			down_clk_cnt = 0;
 		}
 
 		if (_g_state == GAME_OVER)

@@ -191,8 +191,7 @@ int main() {
 
 int main(){
 
-	std::string str("BGM_Tetris_Bradinsky.wav");
-	clTetris tetris(str) ;
+	clTetris tetris ;
 
 	tetris.run() ;
 }

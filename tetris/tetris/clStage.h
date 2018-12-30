@@ -2,9 +2,11 @@
 #include "clMap.h"
 #include "clTimer.h"
 #include "stGameRecord.h"
+#include <map>
 
 #define EMPTY_PATTERN  " "
 #define EMPTY_PATTERN_DOUBLE "  "
+
 
 class clStage{
 
@@ -19,6 +21,7 @@ public:
 		GAME_RUNNING,
 		GAME_OVER
 	};
+
 
 private:
 
@@ -58,11 +61,9 @@ private:
 public:
 	//basic constructor, do nothing, for dynamic array allocation
     clStage() ;
-    clStage(int down_period_milli, int total_rm_lines_cnt, int add_row_period_milli, int stage_num, 
-		std::string bgm_file_path) ;
+    clStage(int down_period_milli, int total_rm_lines_cnt, int add_row_period_milli, int stage_num) ;
     GAME_RESULT run() ;
-	void initialize(int down_period_milli, int total_rm_lines_cnt, int add_row_period_milli, int stage_num, 
-		std::string bgm_file_path);
+	void initialize(int down_period_milli, int total_rm_lines_cnt, int add_row_period_milli, int stage_num);
 	void setPlayerRecord(stGameRecord *record);
 	GAME_RESULT getLatestResult();
 	~clStage();

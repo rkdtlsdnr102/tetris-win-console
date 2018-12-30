@@ -1,4 +1,5 @@
 ﻿#include <Windows.h>
+#include <cassert>
 
 #define FRAME_PATTERN "■"
 #define EMPTY_FRAME_PATTERN "  "

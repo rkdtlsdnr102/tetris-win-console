@@ -2,26 +2,27 @@
 #include <cstdio>
 #include "tetrisUtility.h"
 
+#define DEBUG
+
+#ifdef DEBUG
+#include <iostream>
+#endif 
+
 clTimer *clTimer::_inst = nullptr;
-char clTimer::_time_format[30];
+const char *clTimer::_time_format = (const char*)"Time: %d : %d : %d : %d";
 
 clTimer::clTimer(){
 
     _cur_play_time_milli=0 ;
 	_cur_play_time_dp_tl = {0,0};
     on_off_flag=false ;
-
-	memcpy(_time_format, "Time: %d : %d : %d : %d", sizeof(char) * sizeof(clTimer::_time_format));
 }
 
 void clTimer::_draw(){
 
-    int hour = _cur_play_time_milli/(3600000) ;
-    int min = (_cur_play_time_milli/60000)-hour*60 ;
-    int sec = (_cur_play_time_milli/1000)-3600*hour-60*min ;
-	int milli = (_cur_play_time_milli % 1000)/10;
+	stDayTime time = getTime(_cur_play_time_milli);
 
-    sprintf_s(_time_text,clTimer::_time_format, hour,min,sec,milli) ;
+	sprintf(_time_text, clTimer::_time_format, time.cur_hour, time.cur_min, time.cur_sec, time.cur_millisec); ;
 
 	drawXY(_cur_play_time_dp_tl.X, _cur_play_time_dp_tl.Y, _time_text);
 
@@ -29,12 +30,32 @@ void clTimer::_draw(){
 
 void clTimer::_erase() {
 
-	drawXY(_cur_play_time_dp_tl.X, _cur_play_time_dp_tl.Y, _time_text);
+	static const char time_erase_text[31] = { ' ', ' ',' ',' ',' ', ' ',' ',' ',' ',' ',
+											' ', ' ',' ',' ',' ', ' ',' ',' ',' ',' ', 
+											' ', ' ',' ',' ',' ', ' ',' ',' ',' ',' ', };
+
+
+	drawXY(_cur_play_time_dp_tl.X, _cur_play_time_dp_tl.Y, time_erase_text);
+
+}
+
+
+
+clTimer::stDayTime clTimer::getTime(long long cur_millis)
+{
+	stDayTime time;
+
+	time.cur_hour = cur_millis / (3600000);
+	time.cur_min = (cur_millis / 60000) - time.cur_hour * 60;
+	time.cur_sec = (cur_millis / 1000) - 3600 * time.cur_hour - 60 * time.cur_min;
+	time.cur_millisec = (cur_millis % 1000) / 10;
+
+	return time;
 
 }
 
 void clTimer::setStartTime(long long elapsed_time_milli) {
-
+	
 	_cur_play_time_milli = elapsed_time_milli;
 }
 
@@ -45,14 +66,14 @@ long long clTimer::getCurrentTimeMilli() {
 
 void _tick(clTimer &timer)
 {
-    int mill_cnt=0 ;
+	timer._erase();
 
     while(timer.on_off_flag)
     {
-        std::this_thread::sleep_for(std::chrono::milliseconds(1)) ;
+        std::this_thread::sleep_for(std::chrono::microseconds(19)) ;
 
 		timer._cur_play_time_milli++ ;
-		timer._erase();
+		
 		timer._draw() ;
        
     }
@@ -70,7 +91,8 @@ void clTimer::stop(){
 
     on_off_flag=false ;
 
-    tick_event.wait() ;
+	if(tick_event.valid())
+		tick_event.wait() ;
 }
 
 void clTimer::reset() {
@@ -86,6 +108,11 @@ void clTimer::setDpTopLeft(COORD dp_top_left)
 clTimer::~clTimer() {
 
 	stop();
+
+#ifdef DEBUG
+	std::cout << "Timer Stopped\n";
+#endif
+	
 }
 
 clTimer* clTimer::getInstance() {

@@ -13,10 +13,10 @@
 const std::string clTetris::_record_file_path = "../player_records.dat";
 
 
-clTetris::clTetris(std::string bgm_file_path)
+clTetris::clTetris()
 {
 
-	_bgm_file_path=bgm_file_path ;
+	_bgm_file_path="../main.wav" ;
 
 	_cur_stage_idx=0 ;
 
@@ -34,12 +34,9 @@ void clTetris::run()
 
 			stGameRecord player_record = { "",0,0,0 };
 
-			_stages[0].initialize(100000, 5, 800000, 1,
-				"C:\\Users\\USER\\Desktop\\tetris\\tetris-win-console\\tetris\\Debug\\BGM_Tetris_Bradinsky.wav");
-			_stages[1].initialize(90000, 10, 700000, 2,
-				"C:\\Users\\USER\\Desktop\\tetris\\tetris-win-console\\tetris\\Debug\\BGM+Tetris+Kalinka.wav");
-			_stages[2].initialize(80000, 15, 600000, 3,
-				"C:\\Users\\USER\\Desktop\\tetris\\tetris-win-console\\tetris\\Debug\\BGM_Tetris_Bradinsky.wav");
+			_stages[0].initialize(100000, 5, 800000, 1);
+			_stages[1].initialize(90000, 10, 700000, 2);
+			_stages[2].initialize(80000, 15, 600000, 3);
 
 			clStage::GAME_RESULT res = clStage::GAME_RESULT::PLAYER_WIN;
 
@@ -298,22 +295,21 @@ void clTetris::_gameRecordScreen() {
 
 	HWND console_hwnd = GetConsoleWindow();
 
-	MoveWindow(console_hwnd, 100, 100, 1000, 500, TRUE);
+	MoveWindow(console_hwnd, 100, 100, 1200, 500, TRUE);
 
 	system("cls");
 
-	drawFrameUtil({ 5,3 }, 52,20,
+	drawFrameUtil({ 1,3 }, 72,20,
 		"─", "│", "┌", "┐", "└", "┘");
 
 	std::vector<std::string> name_cols = {"RANK","NAME","TIME","STAGE","SCORE"};
 
-	std::string name_tuple = make_tuple(name_cols, 20, 3);
+	std::string name_tuple = make_tuple(name_cols, 30, 3);
 	
-	drawXY(7, 5, name_tuple.c_str());
-
-	drawXY(7, 26, "PREV_PAGE : <-");
-	drawXY(7, 27, "NEXT_PAGE : ->");
-	drawXY(7, 28, "RETURN : ESC");
+	drawXY(2, 5, name_tuple.c_str());
+	drawXY(2, 26, "PREV_PAGE : <-");
+	drawXY(2, 27, "NEXT_PAGE : ->");
+	drawXY(2, 28, "RETURN : ESC");
 
 	std::vector<stGameRecord> game_records;
 
@@ -328,16 +324,24 @@ void clTetris::_gameRecordScreen() {
 	if (cur_view_rec_start_idx + rec_per_view <= (int)game_records.size())
 		rec_end = game_records.begin() + cur_view_rec_start_idx + rec_per_view ;
 
+	const char *time_format = "%d : %d : %d : %d";
+	char formatted_time[30];
+
 	for (int l = 0; rec_it != rec_end; rec_it++, l++)
 	{
+		clTimer::stDayTime time = clTimer::getTime(rec_it->play_time_milli);
+
+		sprintf(formatted_time, time_format, time.cur_hour, time.cur_min,
+			time.cur_sec, time.cur_millisec);
+		
 		std::vector<std::string> cols = { std::to_string(l + 1),rec_it->name,
-				std::to_string(rec_it->play_time_milli),
+				formatted_time,
 				std::to_string(rec_it->final_stage),
 				std::to_string(rec_it->score) };
 
-		std::string tuple = make_tuple(cols, 20, 3);
+		std::string tuple = make_tuple(cols, 30, 3);
 
-		drawXY(7, 7 + l, tuple.c_str());
+		drawXY(2, 7 + l, tuple.c_str());
 	}
 	
 	while (1)
@@ -374,9 +378,24 @@ void clTetris::_gameRecordScreen() {
 
 		if (view_update)
 		{
+			static const char erase_text[141] = { ' ', ' ',' ',' ',' ', ' ',' ',' ',' ',' ',
+												' ', ' ',' ',' ',' ', ' ',' ',' ',' ',' ', 
+												' ', ' ',' ',' ',' ', ' ',' ',' ',' ',' ', 
+												' ', ' ',' ',' ',' ', ' ',' ',' ',' ',' ', 
+												' ', ' ',' ',' ',' ', ' ',' ',' ',' ',' ', 
+												' ', ' ',' ',' ',' ', ' ',' ',' ',' ',' ', 
+												' ', ' ',' ',' ',' ', ' ',' ',' ',' ',' ', 
+												' ', ' ',' ',' ',' ', ' ',' ',' ',' ',' ',
+												' ', ' ',' ',' ',' ', ' ',' ',' ',' ',' ',
+												' ', ' ',' ',' ',' ', ' ',' ',' ',' ',' ',
+												' ', ' ',' ',' ',' ', ' ',' ',' ',' ',' ',
+												' ', ' ',' ',' ',' ', ' ',' ',' ',' ',' ',
+												' ', ' ',' ',' ',' ', ' ',' ',' ',' ',' ',
+												' ', ' ',' ',' ',' ', ' ',' ',' ',' ',' ',
+												'\0'};
 			//erase prev view
 			for (int l = 0; l<rec_per_view; l++)			
-				drawXY(7, 7 + l, std::string("                                                                    ").c_str());				
+				drawXY(2, 7 + l, erase_text);				
 			
 
 			auto rec_it = game_records.begin() + cur_view_rec_start_idx;
@@ -387,15 +406,20 @@ void clTetris::_gameRecordScreen() {
 
 			for (int l=0; rec_it != rec_end; rec_it++,l++)
 			{
+				clTimer::stDayTime time = clTimer::getTime(rec_it->play_time_milli);
+
+				sprintf(formatted_time, time_format, time.cur_hour, time.cur_min,
+					time.cur_sec, time.cur_millisec);
+
 				std::vector<std::string> cols = { std::to_string(cur_view_rec_start_idx +l + 1),
 					rec_it->name,
-				std::to_string(rec_it->play_time_milli),
+				formatted_time,
 				std::to_string(rec_it->final_stage),
 				std::to_string(rec_it->score) };
 
-				std::string tuple = make_tuple(cols, 20, 3);
+				std::string tuple = make_tuple(cols, 30, 3);
 
-				drawXY(7, 7 + l, tuple.c_str());
+				drawXY(2, 7 + l, tuple.c_str());
 			}
 		}
 

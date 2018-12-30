@@ -31,7 +31,7 @@ private:
 	static const std::string _record_file_path;
 	
 public:
-    clTetris(std::string bgm_file_path) ;
+    clTetris() ;
     void run() ;
 	~clTetris();
 
