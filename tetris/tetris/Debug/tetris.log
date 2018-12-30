@@ -1,5 +1,0 @@
-﻿  clTimer.cpp
-c:\users\user\desktop\tetris-console\tetris-win-console-1\tetris\tetris\cltimer.cpp(48): warning C4244: '=': '__int64'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-c:\users\user\desktop\tetris-console\tetris-win-console-1\tetris\tetris\cltimer.cpp(49): warning C4244: '=': '__int64'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-c:\users\user\desktop\tetris-console\tetris-win-console-1\tetris\tetris\cltimer.cpp(50): warning C4244: '=': '__int64'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-  tetris.vcxproj -> C:\Users\USER\Desktop\tetris-console\tetris-win-console-1\tetris\Debug\tetris.exe
